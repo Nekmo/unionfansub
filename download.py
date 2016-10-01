@@ -9,8 +9,6 @@ import subprocess
 
 import time
 
-from filelock import FileLock, SoftFileLock
-
 OUTPUT = '/media/nekraid02/Downloads'
 STATUS_FILE = os.path.expanduser('~/.config/unionfansub-download.json')
 STATUS_LOG_FILE = os.path.expanduser('~/.config/unionfansub-download.log')
@@ -72,7 +70,7 @@ def write_log(code, episode, output, error, dl):
         print('Stdout:\n{}'.format(output))
         print('Stderr:\n{}'.format(error))
     _write_log_file('{}.log'.format(dl), code, episode, output, error, dl)
-    _write_log_file(STATUS_LOG_FILE, code, episode, output, error, dl, False)
+    _write_log_file(STATUS_LOG_FILE, code, episode, output, error, dl, False, True)
 
 
 def download_episode(dls, episode):
@@ -141,4 +139,3 @@ def download():
 
 if __name__ == '__main__':
     download()
-
