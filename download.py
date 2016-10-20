@@ -84,7 +84,7 @@ def download_episode(dls, episode):
                   stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                   cwd=directory)
         output, error = p.communicate()
-        output, error = output.decode('utf-8'), error.decode('utf-8')
+        output, error = output.decode('utf-8', 'ignore'), error.decode('utf-8', 'ignore')
         code = p.returncode
         write_log(code, episode, output, error, dl)
         if code == 0:
@@ -133,8 +133,8 @@ def download():
         dls = list(sorted(dls, key=sort_dls, reverse=True))
         if not dls:
             continue
-        # download_episodes(config, path, dls)
-        threaded_download_episodes(config, path, dls)
+        download_episodes(config, path, dls)
+        # threaded_download_episodes(config, path, dls)
 
 
 if __name__ == '__main__':
