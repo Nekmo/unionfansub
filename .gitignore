@@ -90,6 +90,7 @@ ENV/
 
 # Created by .ignore support plugin (hsz.mobi)
 .idea
+/mega_auth
 /glob
 /anime.json
 /animes.html

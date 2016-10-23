@@ -4,6 +4,8 @@ import os
 from collections import Counter
 
 import uuid
+from sys import argv
+
 from file_cache.csv_key_value import KeyValueCache
 from file_cache.file import FileCache
 from fuzzywuzzy import fuzz
@@ -13,11 +15,18 @@ from spice_api import spice
 MIN_MATCHING_RATIO = 80
 ANIME_LIST_CACHE = '%2Fmedia%2Fnekraid01%2FAnime%2C%2Fmedia%2Fnekraid02%2FAnime'
 OUTPUT = '/media/nekraid02/Downloads'
+SUCCESS_DATA_PATH = os.path.expanduser('~/.config/unionfansub-success.json')
+OVERRIDE = True
 
 creds = spice.load_auth_from_file('mal_auth')
 words_cache = KeyValueCache('mal')
 file_cache = FileCache('mal')
 al_cache = FileCache('anime-list')
+
+if os.path.lexists(SUCCESS_DATA_PATH):
+    completed = json.load(open(SUCCESS_DATA_PATH))
+else:
+    completed = {}
 
 
 def escape_name(name):
@@ -105,6 +114,10 @@ class AnimeData(dict):
 
     def create_dirs(self):
         i = 0
+        if OVERRIDE:
+            self.directory = self.get_path(i)
+            os.makedirs(self.directory, exist_ok=True)
+            return
         while True:
             self.directory = self.get_path(i)
             if os.path.lexists(self.directory):
@@ -269,6 +282,9 @@ def main():
         mal_titles[title] = missing
     for mal_title in mal_titles.values():
         best = mal_title.get_best()
+        if best.data['url'] in completed:
+            # Ya descargado!
+            continue
         best.create()
         # print(missing.name, missing.get_urls() if not best else [best['languages'], best['subtitles']])
 
