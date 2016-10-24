@@ -46,6 +46,8 @@ def get_episodes_len(dl):
 
 
 def save_config(config):
+    with open(STATUS_FILE + '.bak', 'w') as f:
+        f.write(open(STATUS_FILE, 'r').read())
     json.dump(config, open(STATUS_FILE, 'w'), sort_keys=True, indent=4, separators=(',', ': '))
 
 
@@ -103,23 +105,27 @@ def download_dl(episode, dl, mega_auth=False):
     if os.path.lexists(local_path) and os.path.getsize(local_path) > 1024 * 1024:
         print('El archivo {} ya existía en local.'.format(local_path))
         return True
-    params = ['plowdown', '--temp-directory={}'.format(TMP)]
     if mega_auth:
-        params += ['-a', open('mega_auth').read()]
-    if is_mega(url):
-        params += ['--ignore-crc']
+        params = ['/usr/bin/python2', os.path.join(os.getcwd(), 'mega_premium_download.py')]
+    else:
+        params = ['plowdown', '--temp-directory={}'.format(TMP)]
+        if is_mega(url):
+            params += ['--ignore-crc']
     p = Popen(params + [url], stdin=subprocess.PIPE,
+              env=dict(AUTH_FILE=os.path.join(os.getcwd(), 'mega_auth'),
+                       TEMP_DIR=TMP, **os.environ.copy()),
               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
               cwd=directory)
-    if is_mega(url) and os.path.lexists(local_path) and not os.path.getsize(local_path) and not mega_auth:
-        # Nos hemos quedado sin espacio gratuito. Es necesario usar credenciales.
-        return download_dl(episode, dl, True)
-    elif is_mega(url) and os.path.lexists(local_path) and not os.path.getsize(local_path) and not mega_auth:
-        print('ERROR!!! Se está autenticando en Mega pero sigue habiendo una restricción de datos.')
-        return False
     output, error = p.communicate()
     output, error = output.decode('utf-8', 'ignore'), error.decode('utf-8', 'ignore')
     code = p.returncode
+    if is_mega(url) and os.path.lexists(local_path) and not os.path.getsize(local_path) and not mega_auth:
+        # Nos hemos quedado sin espacio gratuito. Es necesario usar credenciales.
+        print('Nos hemos quedado sin espacio en mega!')
+        return download_dl(episode, dl, True)
+    elif is_mega(url) and os.path.lexists(local_path) and not os.path.getsize(local_path) and mega_auth:
+        print('ERROR!!! Se está autenticando en Mega pero sigue habiendo una restricción de datos.')
+        return False
     write_log(code, episode, output, error, dl, remotename)
     if code == 0:
         return True
