@@ -1,9 +1,7 @@
 import argparse
 import json
 import os
-from sys import argv
 
-from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 
 ROOT_PATH = '/media/nekraid02/Downloads'
@@ -29,7 +27,7 @@ def print_results(results):
     i = 0
     for item in results:
         i += 1
-        print(item['path'])
+        print('{} ({}/{})'.format(item['path'], item.get('episode'), item.get('episodes')))
     print('\nTotal results: {}'.format(i))
 
 
@@ -50,7 +48,7 @@ def completed(args, use_print=True):
 
 
 def failed(args):
-    print_results(filter(lambda x: x.get('finish') == False, list_data(ROOT_PATH)))
+    print_results(filter(lambda x: x.get('finish') and not x.get('success'), list_data(ROOT_PATH)))
 
 
 def incompleted(args):
