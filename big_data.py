@@ -40,7 +40,7 @@ def orphan(args, use_print=True):
 
 
 def completed(args, use_print=True):
-    values = filter(lambda x: x.get('finish'), list_data(ROOT_PATH))
+    values = filter(lambda x: x.get('finish') and x.get('success'), list_data(ROOT_PATH))
     if use_print:
         print_results(values)
     else:
@@ -64,12 +64,16 @@ def unstarted(args):
 
 
 def match_target(args):
+    results = []
     for data in completed(args, use_print=False):
         name = os.path.split(data['path'])[1]
         result = process.extractOne(name, target_directories, score_cutoff=90)
         if not result:
             continue
-        print(result, name)
+        results.append((list(reversed(result)), name, data))
+    results.sort()
+    for result, name, data in results:
+        print('{}\t{}\t[{}]\t\tfile://{}'.format(name, result, data['episodes'], data['path']))
 
 
 def save_success(args):
