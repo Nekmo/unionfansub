@@ -33,7 +33,10 @@ def add_to_csv(line, file=OUTPUT):
         with open(file, 'a') as f:
             c = csv.writer(f)
             for row in queue_rows:
-                c.writerow(row)
+                try:
+                    c.writerow(row)
+                except UnicodeEncodeError:
+                    pass
             queue_rows = []
         last_save = time.time()
 
