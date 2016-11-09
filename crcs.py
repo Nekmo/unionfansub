@@ -10,12 +10,12 @@ PATH = '/media/nekraid01/Anime'
 OUTPUT = 'nekraid01.csv'
 
 COLUMNS = ('path', 'name', 'crc')
+queue_rows = []
 
-df = pd.read_csv(OUTPUT, sep=',', usecols=COLUMNS, header=None, names=COLUMNS)
+with open(OUTPUT) as f:
+    readed_paths = csv.reader(f)
+    readed_paths = [x[0] for x in readed_paths]
 
-# print(df.loc[df['crc'] == '6D7'].empty)
-
-# df.append(pd.DataFrame([['Foo', 'bar', 'AE7A59BE']], columns=COLUMNS))
 
 # Colores
 c_null = "\x1b[00;00m"
@@ -26,17 +26,16 @@ p_reset = "\x08" * 8
 last_save = 0
 
 
-# def add_to_csv(line, file=OUTPUT):
-#     with open(file, 'a') as f:
-#         c = csv.writer(f)
-#         c.writerow(line)
-
-
 def add_to_csv(line, file=OUTPUT):
-    global df, last_save
-    df = df.append(pd.DataFrame([line], columns=COLUMNS))
+    global last_save, queue_rows
+    queue_rows.append(line)
+    readed_paths.append(line[0])
     if time.time() > last_save + 20:
-        df.to_csv(file, index=False, header=False)
+        with open(file, 'a') as f:
+            c = csv.writer(f)
+            for row in queue_rows:
+                c.writerow(row)
+            queue_rows = []
         last_save = time.time()
 
 
@@ -84,7 +83,7 @@ def crc32_checksum(filename):
 
 for file in ls(PATH, depth=True).filter(type='f'):
     path = file.path
-    if not df.loc[df['path'] == path].empty:
+    if path in readed_paths:
         continue
     file_crc = re.findall("\[([a-fA-F0-9]{8})\]", file.name)
     if not file_crc:
