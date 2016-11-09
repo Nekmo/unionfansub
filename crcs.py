@@ -1,4 +1,3 @@
-import pandas as pd
 import csv
 import logging
 import re
