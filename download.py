@@ -161,10 +161,10 @@ def _threaded_download_episodes(config, path, dls):
         download_episodes(config, path, dls)
 
 
-def threaded_download_episodes(config, path, dls):
+def threaded_download_episodes(config, path, dls, daemon=True):
     with threads_semaphore:
         l = threading.Thread(target=_threaded_download_episodes, args=(config, path, dls))
-        l.daemon = True
+        l.daemon = daemon
         l.start()
         time.sleep(1)
 
@@ -180,7 +180,7 @@ def download():
         if not dls:
             continue
         # download_episodes(config, path, dls)
-        threaded_download_episodes(config, path, dls)
+        threaded_download_episodes(config, path, dls, False)
 
 
 if __name__ == '__main__':

@@ -2,10 +2,12 @@ import argparse
 import json
 import os
 
+import shutil
 from fuzzywuzzy import process
 
 ROOT_PATH = '/media/nekraid02/Downloads'
 TARGET_DIR = '/media/nekhd/Anime'
+SUCCESS_TARGET_DIR = '/media/nekraid02/Success'
 DOWNLOAD_CONFIG = os.path.expanduser('~/.config/unionfansub-download.json')
 SUCCESS_DATA_PATH = os.path.expanduser('~/.config/unionfansub-success.json')
 
@@ -73,7 +75,7 @@ def match_target(args):
         results.append((list(reversed(result)), name, data))
     results.sort()
     for result, name, data in results:
-        print('{}\t{}\t[{}]\t\tfile://{}'.format(name, result, data['episodes'], data['path']))
+        print('{}\t{}\t{}\t{}\tfile://{}'.format(name, result[0], result[1], data['episodes'], data['path']))
 
 
 def save_success(args):
@@ -89,6 +91,12 @@ def save_success(args):
     json.dump(success_data, open(SUCCESS_DATA_PATH, 'w'))
 
 
+def move_success(args):
+    for anime in completed(args, False):
+        name = os.path.split(anime['path'])[1]
+        shutil.move(anime['path'], os.path.join(SUCCESS_TARGET_DIR, name))
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     # TODO: los directorios incompletos deben ser comprobados manualmente.
@@ -101,5 +109,6 @@ if __name__ == '__main__':
     add_subparser(subparsers, unstarted)
     add_subparser(subparsers, match_target)
     add_subparser(subparsers, save_success)
+    add_subparser(subparsers, move_success)
     args = parser.parse_args()
     args.func(args)
