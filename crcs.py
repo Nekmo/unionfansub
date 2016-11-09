@@ -6,8 +6,8 @@ import zlib
 import time
 from os3.sc import *
 
-PATH = '/media/nekraid01/Anime'
-OUTPUT = 'nekraid01.csv'
+PATH = sys.argv[1]
+OUTPUT = sys.argv[2]
 
 COLUMNS = ('path', 'name', 'crc')
 queue_rows = []
