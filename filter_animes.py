@@ -206,7 +206,7 @@ def get_animes_data(links, animes_by_link):
     for link in links:
         anime_data = animes_by_link.get(link)
         if not anime_data or not anime_data.get('name'):
-            # Invalid data or url
+            # Invalid rars or url
             continue
         yield anime_data
 
