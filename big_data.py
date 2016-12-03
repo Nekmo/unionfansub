@@ -1,6 +1,8 @@
 import argparse
 import json
 import os
+from urllib import parse
+from terminaltables import SingleTable
 
 import shutil
 from fuzzywuzzy import process
@@ -12,6 +14,15 @@ DOWNLOAD_CONFIG = os.path.expanduser('~/.config/unionfansub-download.json')
 SUCCESS_DATA_PATH = os.path.expanduser('~/.config/unionfansub-success.json')
 
 target_directories = os.listdir(TARGET_DIR)
+
+
+def truncatechars(text, max_length):
+    text = str(text)
+    return (text[:max_length] + '..') if len(text) > max_length else text
+
+
+def format_uri(x):
+    return 'file://{}'.format(parse.quote(x))
 
 
 def add_subparser(subparser, fn):
@@ -41,8 +52,8 @@ def orphan(args, use_print=True):
         return values
 
 
-def completed(args, use_print=True):
-    values = filter(lambda x: x.get('finish') and x.get('success'), list_data(ROOT_PATH))
+def completed(args, use_print=True, target_dir=ROOT_PATH):
+    values = filter(lambda x: x.get('finish') and x.get('success'), list_data(target_dir))
     if use_print:
         print_results(values)
     else:
@@ -65,17 +76,32 @@ def unstarted(args):
     print_results(filter(lambda x: not x.get('finish') and not x.get('episode'), list_data(ROOT_PATH)))
 
 
-def match_target(args):
+def match_target(args, datas=None):
     results = []
-    for data in completed(args, use_print=False):
+    # datas = completed(args, use_print=False)
+    datas = [{'path': os.path.join(SUCCESS_TARGET_DIR, x)} for x in os.listdir(SUCCESS_TARGET_DIR)]
+    datas = [dict(episodes=len([x for x in os.listdir(data['path']) if x.split('.')[-1] not in ['dl', 'log']]), **data)
+             for data in datas]
+    for data in datas:
         name = os.path.split(data['path'])[1]
         result = process.extractOne(name, target_directories, score_cutoff=90)
         if not result:
             continue
         results.append((list(reversed(result)), name, data))
     results.sort()
-    for result, name, data in results:
-        print('{}\t{}\t{}\t{}\tfile://{}'.format(name, result[0], result[1], data['episodes'], data['path']))
+    datas = [
+        (
+            # truncatechars(name, 25),
+            result[0],
+            # truncatechars(result[1], 25),
+            data['episodes'],
+            format_uri(os.path.join(TARGET_DIR, result[1])),
+            format_uri(data['path']),
+        ) for result, name, data in results]
+    table = SingleTable(datas)
+    # for result, name, data in results:
+    #     print('{}\t{}\t{}\t{}\tfile://{}'.format(name, result[0], result[1], data['episodes'], data['path']))
+    print(table.table)
 
 
 def save_success(args):
@@ -83,7 +109,7 @@ def save_success(args):
         success_data = json.load(open(SUCCESS_DATA_PATH))
     else:
         success_data = {}
-    datas = [json.load(open(os.path.join(x['path'], '.anime.json'))) for x in completed(args, False)]
+    datas = [json.load(open(os.path.join(x['path'], '.anime.json'))) for x in completed(args, False, SUCCESS_TARGET_DIR)]
     for data in datas:
         url = data['url']
         if url not in success_data:
